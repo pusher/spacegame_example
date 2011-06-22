@@ -70,7 +70,6 @@ setInterval(function(){
   channel.trigger('worldstate', {positions:positions})
 }, 400)
 
-// Run the same game animation loop as the clients so that updates sent to clients (above) are decoupled from the actual speed of movement/animation in the game. This means that because the clients are animating locally with the same speed loop as below, they can animate the movement of players between the updates from the server (above).
 setInterval(function(){
   for (i in ships) {    
   	ships[i].position.add(ships[i].vector);
