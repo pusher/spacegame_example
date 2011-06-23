@@ -1,9 +1,3 @@
-var debug = function(msg){
-	$('#debug').prepend('<p>'+msg+'</p>')
-}
-// Pusher.log = function(message) {
-//     if (window.console && window.debug) window.debug(message);
-//   };
 var pusher = new Pusher('5d01c573aff20a7f976b');
 var sync_channel = pusher.subscribe('presence-sync');
 
@@ -20,7 +14,22 @@ sync_channel.bind('pusher:member_added', function(member) {
 
 sync_channel.bind('pusher:member_removed', function(member) {
 })
+
+var dir = {left: 37, right: 39, up: 38, down: 40}
+
+sync_channel.bind('client-keypress', function(data) {
+	debug('keypress' + data.keyCode)
+  var ship = ships[data.memberId];
+  if (!ship){ debug('no ship', data.memberId); return  }
   
+  if (data.keyCode == dir.right) { ship.heading += 16.0 }
+  if (data.keyCode == dir.left)  { ship.heading -= 16.0 }
+  if (data.keyCode == dir.up)    { thrust(ship) }
+  if (data.keyCode == dir.down)    { brake(ship) }
+});
+
+var ships = {};
+
 var addShip = function(member_id){
 	var newShip = {
 	  id: member_id,
@@ -36,43 +45,35 @@ var addShip = function(member_id){
 var RAD = Math.PI/180.0;
 var TWOPI = Math.PI*2;
 
-var dir = {left: 37, right: 39, up: 38, down: 40}
 
-channel.bind('client-keypress', function(keyCode) {
-	debug('keypress' + data)
-  var ship = ships[data.id];
-	if (!ship){
-		debug('no ship', data.id)
-  	return
-	}
-  
-  if (keyCode == dir.right) { ship.heading += 8.0 }
-	if (keyCode == dir.left)  { ship.heading -= 8.0 }
-	if (keyCode == dir.up)    { thrust(ship)	}
-});
 
 function thrust(ship, ts){
   // generate a small thrust vector
-  var t = new Vector(0.0, -0.75)
+  var t = new Vector(0.0, -0.55)
   // rotate thrust vector by player current heading
   t.rotate(ship.heading * RAD)
   ship.vector.add(t)
 }
+function brake(ship, ts){
+  ship.vector = new Vector(0.0, 0.0)
+}
 
+// MAIN GAME LOOP
 // Send out the latest worldstate (positions, headings etc..) to all clients a few times a second
 setInterval(function(){
-  var positions = [];
+  var positions = {};
   for (i in ships) {
-    var ship = ships[i];
-      positions[i] = {x:ship.position.x, y:ship.position.y}
-      debug('pos:'+ship.position.x+'x'+ship.position.y)
-  }
-  channel.trigger('worldstate', {positions:positions})
-}, 400)
-
-setInterval(function(){
-  for (i in ships) {    
+    // Move the ship
   	ships[i].position.add(ships[i].vector);
+  	// Create a collection with all positions
+    positions[i] = {x:ships[i].position.x, y:ships[i].position.y, heading:ships[i].heading}
+    debug('x:'+positions[i].x+',y:'+positions[i].y)
   }
-  last_frame_ts = +new Date();
-}, 50)
+  // Send latest positions to all clients
+  console.log(positions)
+  sync_channel.trigger('client-worldstate', {positions:positions})
+}, 100)
+
+var debug = function(msg){
+	$('#debug').prepend('<p>'+msg+'</p>')
+}

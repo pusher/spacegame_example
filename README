@@ -1,0 +1,2 @@
+TODO
+- include member id and data in client events received so that a client can't spoof another person using client events
