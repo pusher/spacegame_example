@@ -63,7 +63,7 @@ $(function() {
     
     $('#world').append('<div class="ship" id="' + memberId + '"></div>');
 
-    var newShip = {
+    ships[memberId] = {
       id: memberId,
       position: {
         x: 0,
@@ -72,10 +72,6 @@ $(function() {
       heading: 0.0,
       el: $('#' + memberId)
     };
-
-    console.log(newShip);
-
-    ships[memberId] = newShip;
   }
 
   function removeShip(memberId) {
