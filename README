@@ -1,0 +1,9 @@
+# Pusher realtime game prototype with server side physics
+
+If you've ever played around with building games in the browser, you'll soon hit up against the problem of how to synchronize your clients and enforce fair play on the server side.
+
+In this (alpha) prototype, we use JS for the front and backend. Pusher is used to sync the players moves and game state. All the physics (pretty simple in this case) happens on the server side and is broadcast out to the clients who render the game. The backend runs the JS using node.js. We've aimed to make the front and backend compatible so that it will be possible to share code between the two (e.g. you may want to run the physics on both the client and backend).
+
+We've kept the code as simple as possible, which means that it's quite inefficient (e.g. sending out the whole world state on every game tick).
+
+We'll be updating the example to add in further optimisations and functionality.
