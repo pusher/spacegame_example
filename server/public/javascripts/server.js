@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 var pusher = new Pusher('5d01c573aff20a7f976b');
+=======
+var pusher = new Pusher('83d652b1c3204e365939');
+>>>>>>> 40c90d4fe300cad34889834df53ece74f812b838
 var sync_channel = pusher.subscribe('presence-sync');
 
 sync_channel.bind('pusher:subscription_succeeded', function(members){
