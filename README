@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-TODO
-- include member id and data in client events received so that a client can't spoof another person using client events
-=======
 # Pusher realtime game prototype with server side physics
 
 If you've ever played around with building games in the browser, you'll soon hit up against the problem of how to synchronize your clients and enforce fair play on the server side.
@@ -11,4 +7,11 @@ In this (alpha) prototype, we use JS for the front and backend. Pusher is used t
 We've kept the code as simple as possible, which means that it's quite inefficient (e.g. sending out the whole world state on every game tick).
 
 We'll be updating the example to add in further optimisations and functionality.
->>>>>>> 40c90d4fe300cad34889834df53ece74f812b838
+
+# Running the game
+
+You'll need to have http://nodejs.org install to run the server side (although you can easily run the server side in the browser - we did this in earlier examples!)
+
+    node server.js
+
+Then goto http://localhost:9595 and open it in two different browsers (so the sessions are different). Use the arrow keys the move around and enjoy!
