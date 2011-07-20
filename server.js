@@ -3,6 +3,7 @@ var http = require('http'),
     path = require('path'),
     connect = require('connect'),
     Pusher = require('./pusher'),
+    Config = require('./shared/config').Config,
     Vectors = require('./shared/vectors');
 
 // Constants:
@@ -34,6 +35,10 @@ function addShip(member_id) {
   };
 
   debug('New ship added: ' + member_id);
+}
+
+function removeShip(member_id) {
+  delete ships[member_id];
 }
 
 function thrust(ship, ts) {
@@ -118,8 +123,8 @@ server.listen(9595);
 /*-----------------------------------------------
   Pusher Server
 -----------------------------------------------*/
-var pusher = new Pusher('83d652b1c3204e365939', {
-  secret_key: '5d1c2e1eef265f638e6f',
+var pusher = new Pusher(Config.key, {
+  secret_key: Config.secret,
   channel_data: {
     user_id: 'SERVER',
     user_info: {}
@@ -141,7 +146,7 @@ sync_channel.bind('pusher:member_added', function(member) {
 });
 
 sync_channel.bind('pusher:member_removed', function(member) {
-  // ??
+  removeShip(member.id)
 });
 
 sync_channel.bind('client-keypress', function(data) {

@@ -10,6 +10,10 @@ We'll be updating the example to add in further optimisations and functionality.
 
 # Running the game
 
+To use the demo you will need a free Pusher account (http://pusher.com). You will also need __client events__ enabled for your account: http://pusher.com/docs/client_api_guide/client_events#trigger-events
+
+Once you have signed up and have client events enabled, copy the key and secret into `server.js`
+
 You'll need to have http://nodejs.org install to run the server side (although you can easily run the server side in the browser - we did this in earlier examples!)
 
     node server.js

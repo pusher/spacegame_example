@@ -1,5 +1,5 @@
 $(function() {
-  var pusher = new Pusher('83d652b1c3204e365939');
+  var pusher = new Pusher(Config.key);
   var sync_channel = pusher.subscribe('presence-sync');
 
   var directions = {
