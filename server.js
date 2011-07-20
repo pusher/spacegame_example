@@ -198,4 +198,4 @@ setInterval(function() {
   sync_channel.trigger('client-worldstate', {
     positions: positions
   });
-}, 3000);
+}, 250);
