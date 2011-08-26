@@ -93,39 +93,7 @@ After we've setup all the Pusher bindings and triggers we want, we call the foll
 
 ## On the client
 
-The `index.html` is fairly simple:
-
-   <html>
-   <head>
-   	<title>space</title>
-   	<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
-   	<script src="http://js.pusherapp.com/1.10.0-pre/pusher.min.js"></script>
-   	<script src="/javascripts/game.js"></script>
-
-   	<style type="text/css" media="screen">
-   	  .ship {
-   	    width: 20px;
-   	    height: 20px;
-   	    position: relative;
-   	    top: 20px;
-   	    left: 20px;
-   	    background: url('/images/ship.png') left top no-repeat;
-   	  }
-   	  #world {
-   	    display: absolute;
-   	    width: 900px;
-   	    height: 500px;
-   	    background: #eee;
-   	  }
-   	</style>
-   </head>
-   <body>
-   <div id="debug"></div>
-   <div id="world"></div>
-   </body>
-   </html>
-
-The exciting stuff is in the `public/javascripts/game.js`
+Our `public/index.html` is fairly simple. The exciting stuff is in the `public/javascripts/game.js`
 
 First we connect to Pusher. Because the Pipe is in early access, you need to connect to our 'darling' server.
 
