@@ -1,6 +1,7 @@
 $(function() {
-  var pusher = new Pusher(Config.key);
-  var sync_channel = pusher.subscribe('presence-sync');
+  Pusher.host = 'ws.darling.pusher.com';
+  var pusher = new Pusher('3d2c7d1f36c5047743f4');
+  var updates_channel = pusher.subscribe('updates');
 
   var directions = {
     37: 'left',
@@ -11,30 +12,31 @@ $(function() {
 
   var ships = {};
 
-
-  // Once we've connected to Pusher, we get a list of everyone else
-  // connected and add their ships to our local game
-  sync_channel.bind('pusher:subscription_succeeded', function(members) {
-    members.each(function(member) {
-      addShip(member.id);
-    });
+  pusher.back_channel.bind('ship_list', function(members) {
+    // console.log(members)
+    for (i in members) {
+      addShip(members[i].id);
+    }
   });
 
   // Add/remove ships when people join/leave
-  sync_channel.bind('pusher:member_added', function(member) {
-    addShip(member.id);
+  updates_channel.bind('ship_added', function(data) {
+    addShip(data.id);
     render();
   });
 
-  sync_channel.bind('pusher:member_removed', function(member) {
-    removeShip(member.id);
+  updates_channel.bind('ship_removed', function(data) {
+    removeShip(data.id);
     render();
   });
+
 
   // Every game tick we receive the latest game state from the server,
   // and update the positions and directions of all the ships
-  sync_channel.bind('client-worldstate', function(data) {
+  updates_channel.bind('new_positions', function(data) {
     for (i in data.positions) {
+      // console.log(ships[i])
+      // console.log(data.positions[i])
       if (ships[i]) {
         ships[i].position.x = data.positions[i].x;
         ships[i].position.y = data.positions[i].y;
@@ -44,15 +46,40 @@ $(function() {
     render();
   });
 
-
+  var input = {};
+  setInterval(function(){
+    pusher.back_channel.trigger('keypress', {
+      input: input
+    });
+  }, 50)
+  
+  
   // When we press a key locally, we send it straight to the server
   $('body').live('keydown', function(evt) {
     if (directions[evt.keyCode]) {
-      sync_channel.trigger('client-keypress', {
-        memberId: window['user_id'],
-        direction: directions[evt.keyCode]
-      });
-    
+      if (directions[evt.keyCode] == 'left')
+        input.left = true
+      if (directions[evt.keyCode] == 'right')
+        input.right = true
+      if (directions[evt.keyCode] == 'up')
+        input.up = true
+      if (directions[evt.keyCode] == 'down')
+        input.down = true
+      evt.preventDefault();
+      return false;
+    }
+  });
+  
+  $('body').live('keyup', function(evt) {
+    if (directions[evt.keyCode]) {
+      if (directions[evt.keyCode] == 'left')
+        input.left = false
+      if (directions[evt.keyCode] == 'right')
+        input.right = false
+      if (directions[evt.keyCode] == 'up')
+        input.up = false
+      if (directions[evt.keyCode] == 'down')
+        input.down = false
       evt.preventDefault();
       return false;
     }
@@ -61,7 +88,8 @@ $(function() {
   function addShip(memberId) {
     if (memberId === 'SERVER') return;
     
-    $('#world').append('<div class="ship" id="' + memberId + '"></div>');
+    var el_id = new Date().getTime();
+    $('#world').append('<div class="ship" id="' + el_id + '"></div>');
 
     ships[memberId] = {
       id: memberId,
@@ -70,8 +98,9 @@ $(function() {
         y: 0
       },
       heading: 0.0,
-      el: $('#' + memberId)
+      el: $('#' + el_id)
     };
+    
   }
 
   function removeShip(memberId) {
@@ -87,6 +116,8 @@ $(function() {
   // be more useful.
   function render() {
     for (i in ships) {
+      // console.log(ships[i].position.x)
+      // console.log(ships[i])
       ships[i].el.css({
         left: ships[i].position.x,
         top: ships[i].position.y,

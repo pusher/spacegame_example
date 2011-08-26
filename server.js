@@ -2,9 +2,8 @@ var http = require('http'),
     qs = require('querystring'),
     path = require('path'),
     connect = require('connect'),
-    Pusher = require('./pusher'),
-    Config = require('./shared/config').Config,
-    Vectors = require('./shared/vectors');
+    Vectors = require('./shared/vectors'),
+    Pusher = require('pusher-pipe');
 
 // Constants:
 var PWD = path.dirname(__filename);
@@ -43,7 +42,7 @@ function removeShip(member_id) {
 
 function thrust(ship, ts) {
   // generate a small thrust vector
-  var t = new Vector(0.0, -0.55);
+  var t = new Vector(0.0, -0.05);
   // rotate thrust vector by player current heading
   t.rotate(ship.heading * Vectors.RAD);
   ship.vector.add(t);
@@ -57,145 +56,100 @@ function brake(ship, ts) {
   Web Server
 -----------------------------------------------*/
 var server = connect.createServer();
-
-// Static files + Code sharing FTW.
-server.use(connect.favicon());
 server.use('/', connect.static(WEB_ROOT));
 server.use('/javascripts/shared', connect.static(SHARED_ROOT));
-
-server.use(connect.cookieParser());
-
-server.use(connect.session({
-  secret: 'Pusher is damn awesome.'
-}));
-
-server.use(function(req, res, next) {
-  if (!req.session.user_id) {
-    req.session.user_id = 'user-' + Math.floor(Math.random() * 0x7FFFFFF);
-  }
-  next();
-});
-
-server.use(connect.router(function(app) {
-  app.post('/pusher/auth', function(req, res, next) {
-    var ajax_data = '';
-
-    req.setEncoding('utf8');
-    req.on('data', function(data) {
-      ajax_data += data;
-    });
-
-    req.on('end', function() {
-      var query = qs.parse(ajax_data);
-      var body = JSON.stringify(pusher.createAuthToken(
-        query.channel_name,
-        query.socket_id,
-        {
-          user_id: req.session.user_id,
-          user_info: {
-            name: req.session.user_id
-          }
-        }
-      ));
-
-      res.writeHead(200, {
-        'Content-Length': body.length,
-        'Content-Type': 'application/json'
-      });
-      res.end(body);
-    });
-  });
-
-  app.get('/user_id.js', function(req, res, next) {
-    var body = 'window["user_id"] = "' + req.session.user_id + '";';
-
-    res.writeHead(200, {
-      'Content-Length': body.length,
-      'Content-Type': 'text/javascript'
-    });
-
-    res.end(body);
-  });
-}));
-
 server.listen(9595);
 
 /*-----------------------------------------------
   Pusher Server
 -----------------------------------------------*/
-var pusher = new Pusher(Config.key, {
-  secret_key: Config.secret,
-  channel_data: {
-    user_id: 'SERVER',
-    user_info: {}
-  }
+var pipe = Pusher.createClient({
+  key: '3d2c7d1f36c5047743f4',
+  secret: 'fdaa0451d364e7036bf8',
+  app_id: 5
+  // debug: true
 });
 
-var sync_channel = pusher.subscribe('presence-sync');
-
-sync_channel.bind('pusher:subscription_succeeded', function(members) {
-   members.each(function(member) {
-     if (member.id != 'SERVER') {
-       addShip(member.id);
-     }
-   });
+// Triggered when a new player connects
+pipe.sockets.on('open', function(socket_id) {
+  // Send new player with list of everyone already connected
+  pipe.socket(socket_id).trigger('ship_list', ships)
+  // Tell existing players about new player
+  addShip(socket_id);
+  pipe.channel('updates').trigger('ship_added', {id:socket_id})
 });
 
-sync_channel.bind('pusher:member_added', function(member) {
-  addShip(member.id);
+// Triggered when a player disconnects
+pipe.sockets.on('close', function(socket_id) {
+  removeShip(socket_id);
+  pipe.channel('updates').trigger('ship_removed', {id:socket_id})
 });
 
-sync_channel.bind('pusher:member_removed', function(member) {
-  removeShip(member.id)
-});
-
-sync_channel.bind('client-keypress', function(data) {
-  var ship = ships[data.memberId];
+// Bind to keypress events sent from clients
+pipe.sockets.on('event:keypress', function(socket_id, data) {
+  console.log(data)
+  var ship = ships[socket_id];
 
   if (!ship) {
-    debug('no ship', data.memberId);
+    debug('no ship', socket_id);
     return;
   }
 
-  if (data.direction === 'right') {
-    ship.heading += 16.0;
-  }
-
-  if (data.direction === 'left') {
-    ship.heading -= 16.0;
-  }
-
-  if (data.direction === 'up') {
+  if (data.input.right)
+    ship.heading += 8.0;
+  if (data.input.left) 
+    ship.heading -= 8.0;
+  if (data.input.up) 
     thrust(ship);
-  }
-
-  if (data.direction === 'down') {
+  if (data.input.down) 
     brake(ship);
-  }
 });
+
 
 /*-----------------------------------------------
   Game loop:
 -----------------------------------------------*/
 
-// Send out the latest worldstate (positions, headings etc..)
-// to all clients a ten times a second
-setInterval(function() {
-  var positions = {};
-  for (var id in ships) {
-    // Move the ship
-    ships[id].position.add(ships[id].vector);
-    // Create a collection with all positions
-    positions[id] = {
-      x: ships[id].position.x,
-      y: ships[id].position.y,
-      heading: ships[id].heading
-    };
+pipe.on('connected', function() {
+  // Send out the latest worldstate (positions, headings etc..)
+  // to all clients a ten times a second
+  setInterval(function() {
+    var positions = {};
+    var any_ships = false;
+    for (var id in ships) {
+      any_ships = true;
+      // Move the ship
+    
+      ships[id].position.x = dial(ships[id].position.x, ships[id].vector.x, 800);
+      ships[id].position.y = dial(ships[id].position.y, ships[id].vector.y, 500);
+    
+      // Create a collection with all positions
+      positions[id] = {
+        x: ships[id].position.x,
+        y: ships[id].position.y,
+        heading: ships[id].heading
+      };
 
-    debug('ship: ' + id + 'x:' + positions[id].x + ', y:' + positions[id].y);
-  }
-  // Send latest positions to all clients
-  sync_channel.trigger('client-worldstate', {
-    positions: positions
-  });
-}, 60);
+      debug('ship: ' + id + 'x:' + positions[id].x + ', y:' + positions[id].y);
+    }
+    // Send latest positions to all clients
+  
+    if (any_ships) {
+      pipe.channel('updates').trigger('new_positions', {
+        positions: positions
+      });
+    }
+  }, 50);
+});
+
+var dial = function(current, change, limit) {
+  var absolute = current + change;
+  if(change < 0 && absolute < 0) // gone over
+    return limit + absolute % limit;
+  else if(change > 0 && absolute > limit)
+    return absolute % limit
+  else
+    return absolute;
+}
+
+pipe.connect();
