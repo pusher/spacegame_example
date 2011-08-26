@@ -2,7 +2,7 @@
 
 If you've ever played around with building games in the browser, you'll soon hit up against the problem of how to synchronize your clients and enforce fair play on the server side.
 
-In this prototype using the new [Pusher Pipe](http://pusher.com/docs/pipe) to sync the players moves and game state. All the physics (pretty simple in this case) happens on the server side and is broadcast out to the clients who render the scene. The backend is written in Node. We've aimed to make the front and backend compatible so that it will be possible to share code between the two (e.g. you may want to run the physics on both the client and backend).
+This is a prototype using the new [Pusher Pipe](http://pusher.com/docs/pipe) to sync the players moves and game state. All the physics (pretty simple in this case) happens on the server side and is broadcast out to the clients who render the scene. The backend is written in Node. We've aimed to make the front and backend compatible so that it will be possible to share code between the two (e.g. you may want to run the physics on both the client and backend).
 
 When people visit the game everyone will see their spaceship. All players can then fly around using the arrow keys.
 
@@ -12,19 +12,19 @@ We've kept the code as simple as possible, which means that it's quite inefficie
 
 To use the demo you will need to be part of the Pusher Pipe early access program. If you would like to take part please email info@pusher.com with your details.
 
-Once you're signed up, login to the special dashboard and copy the key and secret for your app into both `server.js` and `public/javascripts/game.js`
+Once you're signed up, log in to the special dashboard and copy the key and secret for your app into both `server.js` and `public/javascripts/game.js`
 
-You'll need to have http://nodejs.org install to run the server side.
+You'll need to have http://nodejs.org installed to run the server side.
 
     node server.js
 
-Then goto http://localhost:9595 and open it in two different browsers (so the sessions are different). Use the arrow keys the move around and enjoy!
+Then go to http://localhost:9595 and open it in two different browsers (so the sessions are different). Use the arrow keys to move around and enjoy!
 
 # What is going on here?
 
 ## On the server
 
-We're using some special new features of the Pusher Pipe to connect directly to Pusher from our Node server. The [Pusher Pipe Quickstart doc](http://pusher.com/docs/pipe_quickstart) has an overview of connecting to the Pusher Pipe. If you take a look in `server.js`, at the top we include the node module `Pusher = require('pusher-pipe');` (which can be installed with `npm install pusher-pipe`). Then we initiate the Pusher connection like so:
+We're using some special new features of the Pusher Pipe to connect directly to Pusher from our Node server. The [Pusher Pipe Quickstart doc](http://pusher.com/docs/pipe_quickstart) has an overview of how you connect. If you take a look in `server.js`, at the top we include the node module `Pusher = require('pusher-pipe');` (which can be installed with `npm install pusher-pipe`). Then we initiate the Pusher connection like so:
 
     var pipe = Pusher.createClient({
       key: '3d2c7d1f36c5347743f4',
