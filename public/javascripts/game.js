@@ -1,6 +1,6 @@
 $(function() {
   Pusher.host = 'ws.darling.pusher.com';
-  var pusher = new Pusher('3d2c7d1f36c5047743f4');
+  var pusher = new Pusher('3d2c7d1f36c5047743f4'); // Replace with your key
   var updates_channel = pusher.subscribe('updates');
 
   var directions = {
@@ -12,13 +12,6 @@ $(function() {
 
   var ships = {};
 
-  pusher.back_channel.bind('ship_list', function(members) {
-    // console.log(members)
-    for (i in members) {
-      addShip(members[i].id);
-    }
-  });
-
   // Add/remove ships when people join/leave
   updates_channel.bind('ship_added', function(data) {
     addShip(data.id);
@@ -29,7 +22,6 @@ $(function() {
     removeShip(data.id);
     render();
   });
-
 
   // Every game tick we receive the latest game state from the server,
   // and update the positions and directions of all the ships
@@ -45,14 +37,20 @@ $(function() {
     }
     render();
   });
-
+  
+  pusher.back_channel.bind('ship_list', function(members) {
+    // console.log(members)
+    for (i in members) {
+      addShip(members[i].id);
+    }
+  });
+  
   var input = {};
   setInterval(function(){
     pusher.back_channel.trigger('keypress', {
       input: input
     });
   }, 50)
-  
   
   // When we press a key locally, we send it straight to the server
   $('body').live('keydown', function(evt) {
